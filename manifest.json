@@ -2,11 +2,11 @@
   "name": "Music Monitor",
   "short_name": "Music",
   "description": "Personal music library — curated tracks & sessions",
-  "start_url": "/music-monitor/",
-  "scope": "/music-monitor/",
+  "start_url": "/Music-monitor/",
+  "scope": "/Music-monitor/",
   "display": "standalone",
-  "background_color": "#0f0f0f",
-  "theme_color": "#0f0f0f",
+  "background_color": "#212737",
+  "theme_color": "#212737",
   "icons": [
     {
       "src": "icon-192.png",
