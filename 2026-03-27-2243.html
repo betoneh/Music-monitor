@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#212737">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Music Monitor — 2026-03-27-2243</title>
+<style>
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; width: 0%;
+    height: 4px; background: #0ec4a9; z-index: 100;
+    transition: width 50ms linear;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #212737; color: #eaedf3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                 "Liberation Mono", "Courier New", monospace;
+    min-height: 100svh; display: flex; flex-direction: column;
+    overflow-y: scroll; scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(14, 196, 169, 0.75); color: #212737; }
+  a { outline-offset: 1px; outline-color: rgba(14, 196, 169, 0.75); }
+  a:focus-visible { outline: 2px dashed rgba(14, 196, 169, 0.75); text-decoration: none; }
+
+  header, main, footer {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem;
+  }
+  header { padding: 2rem 1rem 1.5rem; }
+  .title-row {
+    display: flex; align-items: baseline; gap: 0.75rem;
+  }
+  .site-title {
+    display: inline-block;
+    font-size: 1.875rem; font-weight: 700; color: #0ec4a9; text-decoration: none;
+  }
+  @media (min-width: 640px) { .site-title { font-size: 2.25rem; } }
+  .site-title:hover { color: #0ec4a9; }
+  .feed-badge {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.4);
+    font-weight: 400;
+  }
+  .header-meta {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-top: 0.5rem; margin-bottom: 1.5rem;
+  }
+  .header-meta .date-wrap {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.875rem; color: #eaedf3; opacity: 0.8; font-style: italic;
+  }
+  @media (min-width: 640px) { .header-meta .date-wrap { font-size: 1rem; } }
+  .header-meta .date-wrap svg {
+    display: inline-block; width: 1.25rem; height: 1.25rem; min-width: 1.25rem; flex-shrink: 0;
+  }
+  .header-meta .sep { color: rgba(234, 237, 243, 0.3); }
+  .header-meta .reading-time {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.6);
+  }
+
+  .hr { max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem; }
+  .hr hr { border: none; border-top: 1px solid #0a8f7b; }
+
+  main { flex: 1; }
+
+  .category { margin-bottom: 2rem; }
+  .category-header {
+    display: flex; align-items: baseline; gap: 0.75rem;
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #0a8f7b;
+  }
+  .category-header h2 { font-size: 1.25rem; font-weight: 600; color: #eaedf3; }
+  .category-count {
+    font-size: 0.75rem; color: #8b949e;
+    background: rgba(52, 63, 96, 0.75); padding: 1px 8px; border-radius: 3px;
+  }
+
+  /* Music Monitor category colors */
+  .cat-nuevas .category-header { border-color: #0ec4a9; }
+  .cat-nuevas .category-header h2 { color: #0ec4a9; }
+  .cat-biblioteca .category-header { border-color: #8b5cf6; }
+  .cat-biblioteca .category-header h2 { color: #8b5cf6; }
+
+  .editorial {
+    line-height: 1.75; font-size: 1rem; margin-bottom: 1rem;
+    overflow-wrap: break-word; word-break: break-word;
+    color: #eaedf3;
+  }
+
+  a { color: #0ec4a9; text-decoration: none; }
+  a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+  .editorial a { color: #0ec4a9; text-decoration: none; }
+  .editorial a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+
+  .track-item {
+    background: rgba(52, 63, 96, 0.35);
+    border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.875rem 1rem;
+    margin-bottom: 0.75rem;
+    overflow: hidden; max-width: 100%;
+  }
+  @media (hover:hover) { .track-item:hover { border-color: #0ec4a9; } }
+  .cat-biblioteca .track-item:hover { border-color: #8b5cf6; }
+  .track-meta {
+    font-size: 0.75rem; color: #8b949e; margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  .audio-row {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem 1.5rem;
+  }
+  .audio-player {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(52, 63, 96, 0.35); border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.625rem 1rem;
+  }
+  .audio-player:hover { border-color: #0ec4a9; }
+  .audio-btn {
+    background: none; border: none; cursor: pointer;
+    color: #0ec4a9; font-size: 1.25rem; padding: 0; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; flex-shrink: 0;
+  }
+  .audio-btn:hover { color: #eaedf3; }
+  .audio-progress {
+    flex: 1; height: 3px; background: rgba(52, 63, 96, 0.75);
+    border-radius: 2px; cursor: pointer; position: relative;
+  }
+  .audio-progress-fill {
+    height: 100%; background: #0ec4a9; border-radius: 2px;
+    width: 0%; transition: width 100ms linear;
+  }
+  .audio-time {
+    font-size: 0.75rem; color: #8b949e; min-width: 3.5rem; text-align: right;
+  }
+  .audio-note {
+    font-size: 0.75rem; color: #8b949e; flex: 1; font-style: italic;
+  }
+
+  footer { padding: 1.5rem 1rem; }
+  .footer-text {
+    text-align: center; font-size: 0.75rem; color: #8b949e; line-height: 1.6;
+  }
+  .footer-text a {
+    color: #eaedf3; text-decoration: underline;
+    text-decoration-style: dashed; text-underline-offset: 4px;
+  }
+  .footer-text a:hover { color: #0ec4a9; }
+  .stats-line {
+    text-align: center; font-size: 0.75rem; color: #8b949e;
+    margin-bottom: 0.5rem; line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1.5rem 1rem 1rem; }
+    .site-title { font-size: 1.25rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<header>
+  <div class="title-row">
+    <a href="index.html" class="site-title">Music Monitor</a>
+    <span class="feed-badge">For You</span>
+  </div>
+  <div class="header-meta">
+    <span class="date-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M7 14h.013"/><path d="M10.01 14h.005"/><path d="M13.01 14h.005"/><path d="M16.015 14h.005"/><path d="M13.015 17h.005"/><path d="M7.01 17h.005"/><path d="M10.01 17h.005"/></svg>
+      <time>27 Mar, 2026 — 10:43pm</time>
+    </span>
+    <span class="sep">&bull;</span>
+    <span class="reading-time" id="reading-time"></span>
+  </div>
+</header>
+
+<main>
+
+  <div class="category cat-nuevas">
+    <div class="category-header">
+      <h2>🆕 Nuevas</h2>
+      <span class="category-count">66 tracks</span>
+    </div>
+
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=tO4dxvguQDk" target="_blank">Norah Jones - Don't Know Why</a></p>
+        <p class="track-meta">3:03 · YouTube · Jazz / Vocal · 25 Feb 2009</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=nkgBWlsQdgQ" target="_blank">aja monet - for the Congo (Live on KEXP)</a></p>
+        <p class="track-meta">4:32 · KEXP · 26 Mar 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=6jYtRQ2tHGg" target="_blank">NPR Music — Norah Jones: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:59 · NPR Tiny Desk · 22 Jul 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=KcOweHh_DMI" target="_blank">Immanuel Wilkins: Tiny Desk Concert</a></p>
+        <p class="track-meta">25:07 · NPR Tiny Desk · Jazz · 24 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=M5QOaaRJYFc" target="_blank">Jill Scott: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:18 · NPR Tiny Desk · Neo-Soul · 16 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=rMWjbb2l5BE" target="_blank">Daniel Caesar: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:19 · NPR Tiny Desk · R&B · 5 Jan 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=j22KzIF34Xo" target="_blank">GIVĒON: Tiny Desk Concert</a></p>
+        <p class="track-meta">16:45 · NPR Tiny Desk · R&B · 19 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=cJQ99hiO_h8" target="_blank">Emily King: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:35 · NPR Tiny Desk · Soul · 3 Nov 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=Br7beKBJFLE" target="_blank">Coco Jones: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:20 · NPR Tiny Desk · R&B · 9 Jan 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=xvqEmRekRdU" target="_blank">Destin Conrad: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:53 · NPR Tiny Desk · R&B · 12 Jan 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=5Q7LyfbOQD8" target="_blank">FLO: Tiny Desk Concert</a></p>
+        <p class="track-meta">23:20 · NPR Tiny Desk · R&B · 20 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=H4uzympZPx0" target="_blank">John Fogerty: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:36 · NPR Tiny Desk · Classic Rock · 16 Jan 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=gHL5ApOqMQc" target="_blank">Robert Plant: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:52 · NPR Tiny Desk · Classic Rock · 21 Nov 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=jrkOQuRYCIQ" target="_blank">The Doobie Brothers: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:19 · NPR Tiny Desk · Classic Rock · 5 Nov 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=X0X12AD7nK4" target="_blank">Goo Goo Dolls: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:10 · NPR Tiny Desk · Alt Rock · 19 Nov 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=WgqaxMOKfnI" target="_blank">Billy Strings: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:38 · NPR Tiny Desk · Bluegrass · 10 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=sSY_w9odHPk" target="_blank">Sixpence None the Richer: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:15 · NPR Tiny Desk · Indie Pop · 17 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=q-NDZ31pXmM" target="_blank">Sarah McLachlan: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:42 · NPR Tiny Desk · Singer-Songwriter · 12 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=BoQctt3WEy8" target="_blank">Brandi Carlile: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:34 · NPR Tiny Desk · Folk Rock · 3 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=-VwcJdXJoxs" target="_blank">Madi Diaz: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:11 · NPR Tiny Desk · Singer-Songwriter · 12 Mar 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=DzS1ak7vQ-M" target="_blank">Miguel: Tiny Desk Concert</a></p>
+        <p class="track-meta">23:54 · NPR Tiny Desk · R&B · 3 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=m5XxOLdMSS8" target="_blank">Buddy Guy: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:12 · NPR Tiny Desk · Blues · 27 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=jjuorGiEUS4" target="_blank">Air: Tiny Desk Concert</a></p>
+        <p class="track-meta">17:00 · NPR Tiny Desk · Electronic · 5 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=L_BHC2l30pY" target="_blank">Sam Smith: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:47 · NPR Tiny Desk · Pop / Soul · 29 Sep 2023</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=oxo-loXdcH0" target="_blank">Bono & The Edge — Bono and The Edge: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:11 · NPR Tiny Desk · 17 Mar 2023</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=Xcv0O44zfeU" target="_blank">Kokoroko: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:50 · NPR Tiny Desk · Afrobeat Jazz · 20 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=DqgdNk9DCck" target="_blank">Alex Isley: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:01 · NPR Tiny Desk · R&B · 23 Jun 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=Sh4u8Da0F7A" target="_blank">Nubya Garcia: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:42 · NPR Tiny Desk · Jazz · 9 Apr 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=dWscjSp9B4w" target="_blank">Nduduzo Makhathini: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:25 · NPR Tiny Desk · Jazz · 18 Aug 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=R81jAk9LgiQ" target="_blank">Stanley Clarke: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:36 · NPR Tiny Desk · Jazz Fusion · 17 Jun 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=rtXMRhAwWVQ" target="_blank">Madison McFerrin: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:35 · NPR Tiny Desk · Neo-Soul · 28 Apr 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=x8WTPgeVPjg" target="_blank">Kamasi Washington: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:07 · NPR Tiny Desk · Jazz · 21 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=l7OtKIZE7tE" target="_blank">Braxton Cook: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:28 · NPR Tiny Desk · Jazz · 3 Feb 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=jNnsTNZR2bU" target="_blank">Leon Thomas: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:44 · NPR Tiny Desk · R&B · 20 Feb 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=pePbXflDyRM" target="_blank">Bilal: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:20 · NPR Tiny Desk · Neo-Soul · 21 Jan 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=_Q8N8a7-Qwk" target="_blank">Durand Jones: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:25 · NPR Tiny Desk · Soul · 15 Nov 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=PbM82phaaeg" target="_blank">The Baylor Project: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:51 · NPR Tiny Desk · Jazz Vocal · 23 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=ZVEeAxeyAPU" target="_blank">Rita Payés: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:43 · NPR Tiny Desk · Jazz Vocal · 2 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=8PizSSUfetg" target="_blank">Amerie: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:07 · NPR Tiny Desk · R&B · 6 Jun 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=0e1ejLjjriw" target="_blank">Omar: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:52 · NPR Tiny Desk · Soul · 14 Aug 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=GhY31ngpnWg" target="_blank">Abel Selaocoe: Tiny Desk Concert</a></p>
+        <p class="track-meta">16:57 · NPR Tiny Desk · World / Cello · 3 Mar 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=iQTErSrzC64" target="_blank">Teedra Moses: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:48 · NPR Tiny Desk · R&B · 25 Nov 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=QeT_xGZUiOo" target="_blank">Michael Mayo: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:17 · NPR Tiny Desk · Jazz Vocal · 8 Sep 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=xSDfCwDmJNo" target="_blank">Tame Impala: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:22 · NPR Tiny Desk · Psychedelic Pop · 17 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=eUjQkMma-Is" target="_blank">Parcels: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:38 · NPR Tiny Desk · Disco / Funk · 22 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=AzUHNjKMeV4" target="_blank">Wet Leg: Tiny Desk Concert</a></p>
+        <p class="track-meta">17:00 · NPR Tiny Desk · Indie Rock · 9 Jul 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=bFl_sP231wY" target="_blank">Third Eye Blind: Tiny Desk Concert</a></p>
+        <p class="track-meta">23:46 · NPR Tiny Desk · Alt Rock · 13 Mar 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=I067BonnW48" target="_blank">The Marías: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:36 · NPR Tiny Desk · Indie Pop · 9 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=y38qQRg3UDI" target="_blank">Dua Lipa: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:25 · NPR Tiny Desk · Pop · 25 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=BEoGvTlJMyY" target="_blank">Sabrina Carpenter: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:10 · NPR Tiny Desk · Pop · 20 Dec 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=fOAIrUZbOwo" target="_blank">Billie Eilish: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:18 · NPR Tiny Desk · Pop · 12 Dec 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=cXYgdCXkLMc" target="_blank">girl in red: Tiny Desk Concert</a></p>
+        <p class="track-meta">17:05 · NPR Tiny Desk · Indie Pop · 11 Feb 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=GjZ2XqYzPTI" target="_blank">Sheila E.: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:26 · NPR Tiny Desk · Funk · 11 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=o9PoZ0Vcb_s" target="_blank">Silvana Estrada: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:49 · NPR Tiny Desk · Folk Mexicano · 15 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=3MH37M3wPas" target="_blank">Fito Páez: Tiny Desk Concert</a></p>
+        <p class="track-meta">18:37 · NPR Tiny Desk · Rock Argentino · 15 Sep 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=XerTuv79p2M" target="_blank">Carlos Vives: Tiny Desk Concert</a></p>
+        <p class="track-meta">28:36 · NPR Tiny Desk · Latin · 23 Sep 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=g3XYl7hdGPQ" target="_blank">Gloria Estefan: Tiny Desk Concert</a></p>
+        <p class="track-meta">30:14 · NPR Tiny Desk · Latin Pop · 13 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=xbuDoIUMlCs" target="_blank">Carín León: Tiny Desk Concert</a></p>
+        <p class="track-meta">14:49 · NPR Tiny Desk · Regional Mexicano · 16 May 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=X1bx9_TL20A" target="_blank">Buena Vista Social Club: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:18 · NPR Tiny Desk · Son Cubano · 27 May 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=1ul9aWg0AQo" target="_blank">Faye Webster: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:47 · NPR Tiny Desk · Indie Folk · 31 Jan 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=lfGdjdxxOuU" target="_blank">Gillian Welch & David Rawlings: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:18 · NPR Tiny Desk · Folk · 2 Jul 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=ps1f7p720FA" target="_blank">Waxahatchee: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:30 · NPR Tiny Desk · Indie · 16 Dec 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=E6-z-Gqd30Q" target="_blank">Yasmin Williams: Tiny Desk Concert</a></p>
+        <p class="track-meta">23:55 · NPR Tiny Desk · Acoustic Guitar · 7 Feb 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=G_-DftINZKg" target="_blank">Beth Gibbons: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:46 · NPR Tiny Desk · Art Rock · 12 May 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=mV5U5gWJSU4" target="_blank">Elmiene: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:26 · NPR Tiny Desk · Soul · 11 Nov 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=IRQR5foSUSI" target="_blank">Yunchan Lim: Tiny Desk Concert</a></p>
+        <p class="track-meta">17:36 · NPR Tiny Desk · Classical Piano · 13 Nov 2024</p>
+      </div>
+  </div>
+
+  <div class="category cat-biblioteca">
+    <div class="category-header">
+      <h2>📚 Biblioteca</h2>
+      <span class="category-count">0 tracks</span>
+    </div>
+
+  </div>
+
+</main>
+
+<div class="hr"><hr></div>
+
+<footer>
+  <p class="stats-line">66 tracks · Nuevas 66 · Biblioteca 0</p>
+  <p class="footer-text">
+    Generated by <a href="https://betoneh.github.io/Music-monitor/">Music Monitor</a> ·
+    <a href="https://x.com/beto_neh">@beto_neh</a> · 2026-03-27T22:43
+  </p>
+</footer>
+
+<script>
+
+  // Reading time
+  const text = document.querySelector('main').innerText;
+  const words = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  document.getElementById('reading-time').textContent = minutes + ' min read';
+
+  // Progress bar
+  const bar = document.getElementById('progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    bar.style.width = progress + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  // Pull to refresh (PWA)
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+    let sy=0,p=false,d=document,b=d.body;
+    const el=d.createElement('div');
+    el.style.cssText='position:fixed;top:-50px;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:14px;z-index:9999;transition:top 0.2s;background:#212737;';
+    el.textContent='\u2193 Pull to refresh';
+    b.prepend(el);
+    d.addEventListener('touchstart',e=>{if(window.scrollY<1){sy=e.touches[0].clientY;p=true;}},{passive:true});
+    d.addEventListener('touchmove',e=>{
+      if(!p)return;
+      const dy=e.touches[0].clientY-sy;
+      if(dy<0||window.scrollY>0){p=false;el.style.top='-50px';return;}
+      if(dy>5)e.preventDefault();
+      const t=Math.min(dy*0.4,50);
+      el.style.top=(t-50)+'px';
+      el.textContent=dy>80?'\u2191 Release':'\u2193 Pull to refresh';
+    },{passive:false});
+    d.addEventListener('touchend',e=>{
+      if(!p){return;}p=false;
+      const dy=e.changedTouches[0].clientY-sy;
+      el.style.top='-50px';
+      if(dy>80){el.style.top='0';el.textContent='Refreshing...';setTimeout(()=>location.reload(),200);}
+    });
+  }
+
+</script>
+</body>
+</html>
