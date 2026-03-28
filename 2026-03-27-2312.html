@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#212737">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Music Monitor — 2026-03-27-2312</title>
+<style>
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; width: 0%;
+    height: 4px; background: #0ec4a9; z-index: 100;
+    transition: width 50ms linear;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #212737; color: #eaedf3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                 "Liberation Mono", "Courier New", monospace;
+    min-height: 100svh; display: flex; flex-direction: column;
+    overflow-y: scroll; scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(14, 196, 169, 0.75); color: #212737; }
+  a { outline-offset: 1px; outline-color: rgba(14, 196, 169, 0.75); }
+  a:focus-visible { outline: 2px dashed rgba(14, 196, 169, 0.75); text-decoration: none; }
+
+  header, main, footer {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem;
+  }
+  header { padding: 2rem 1rem 1.5rem; }
+  .title-row {
+    display: flex; align-items: baseline; gap: 0.75rem;
+  }
+  .site-title {
+    display: inline-block;
+    font-size: 1.875rem; font-weight: 700; color: #0ec4a9; text-decoration: none;
+  }
+  @media (min-width: 640px) { .site-title { font-size: 2.25rem; } }
+  .site-title:hover { color: #0ec4a9; }
+  .feed-badge {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.4);
+    font-weight: 400;
+  }
+  .header-meta {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-top: 0.5rem; margin-bottom: 1.5rem;
+  }
+  .header-meta .date-wrap {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.875rem; color: #eaedf3; opacity: 0.8; font-style: italic;
+  }
+  @media (min-width: 640px) { .header-meta .date-wrap { font-size: 1rem; } }
+  .header-meta .date-wrap svg {
+    display: inline-block; width: 1.25rem; height: 1.25rem; min-width: 1.25rem; flex-shrink: 0;
+  }
+  .header-meta .sep { color: rgba(234, 237, 243, 0.3); }
+  .header-meta .reading-time {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.6);
+  }
+
+  .hr { max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem; }
+  .hr hr { border: none; border-top: 1px solid #0a8f7b; }
+
+  main { flex: 1; }
+
+  .category { margin-bottom: 2rem; }
+  .category-header {
+    display: flex; align-items: baseline; gap: 0.75rem;
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #0a8f7b;
+  }
+  .category-header h2 { font-size: 1.25rem; font-weight: 600; color: #eaedf3; }
+  .category-count {
+    font-size: 0.75rem; color: #8b949e;
+    background: rgba(52, 63, 96, 0.75); padding: 1px 8px; border-radius: 3px;
+  }
+
+  /* Music Monitor category colors */
+  .cat-nuevas .category-header { border-color: #0ec4a9; }
+  .cat-nuevas .category-header h2 { color: #0ec4a9; }
+  .cat-biblioteca .category-header { border-color: #8b5cf6; }
+  .cat-biblioteca .category-header h2 { color: #8b5cf6; }
+
+  .editorial {
+    line-height: 1.75; font-size: 1rem; margin-bottom: 1rem;
+    overflow-wrap: break-word; word-break: break-word;
+    color: #eaedf3;
+  }
+
+  a { color: #0ec4a9; text-decoration: none; }
+  a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+  .editorial a { color: #0ec4a9; text-decoration: none; }
+  .editorial a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+
+  .track-item {
+    background: rgba(52, 63, 96, 0.35);
+    border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.875rem 1rem;
+    margin-bottom: 0.75rem;
+    overflow: hidden; max-width: 100%;
+  }
+  @media (hover:hover) { .track-item:hover { border-color: #0ec4a9; } }
+  .cat-biblioteca .track-item:hover { border-color: #8b5cf6; }
+  .track-meta {
+    font-size: 0.75rem; color: #8b949e; margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  .audio-row {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem 1.5rem;
+  }
+  .audio-player {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(52, 63, 96, 0.35); border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.625rem 1rem;
+  }
+  .audio-player:hover { border-color: #0ec4a9; }
+  .audio-btn {
+    background: none; border: none; cursor: pointer;
+    color: #0ec4a9; font-size: 1.25rem; padding: 0; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; flex-shrink: 0;
+  }
+  .audio-btn:hover { color: #eaedf3; }
+  .audio-progress {
+    flex: 1; height: 3px; background: rgba(52, 63, 96, 0.75);
+    border-radius: 2px; cursor: pointer; position: relative;
+  }
+  .audio-progress-fill {
+    height: 100%; background: #0ec4a9; border-radius: 2px;
+    width: 0%; transition: width 100ms linear;
+  }
+  .audio-time {
+    font-size: 0.75rem; color: #8b949e; min-width: 3.5rem; text-align: right;
+  }
+  .audio-note {
+    font-size: 0.75rem; color: #8b949e; flex: 1; font-style: italic;
+  }
+
+  footer { padding: 1.5rem 1rem; }
+  .footer-text {
+    text-align: center; font-size: 0.75rem; color: #8b949e; line-height: 1.6;
+  }
+  .footer-text a {
+    color: #eaedf3; text-decoration: underline;
+    text-decoration-style: dashed; text-underline-offset: 4px;
+  }
+  .footer-text a:hover { color: #0ec4a9; }
+  .stats-line {
+    text-align: center; font-size: 0.75rem; color: #8b949e;
+    margin-bottom: 0.5rem; line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1.5rem 1rem 1rem; }
+    .site-title { font-size: 1.25rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<header>
+  <div class="title-row">
+    <a href="index.html" class="site-title">Music Monitor</a>
+    <span class="feed-badge">For You</span>
+  </div>
+  <div class="header-meta">
+    <span class="date-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M7 14h.013"/><path d="M10.01 14h.005"/><path d="M13.01 14h.005"/><path d="M16.015 14h.005"/><path d="M13.015 17h.005"/><path d="M7.01 17h.005"/><path d="M10.01 17h.005"/></svg>
+      <time>27 Mar, 2026 — 11:12pm</time>
+    </span>
+    <span class="sep">&bull;</span>
+    <span class="reading-time" id="reading-time"></span>
+  </div>
+</header>
+
+<main>
+
+  <div class="category cat-nuevas">
+    <div class="category-header">
+      <h2>🆕 Nuevas</h2>
+      <span class="category-count">5 tracks</span>
+    </div>
+
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=iQTErSrzC64" target="_blank">Teedra Moses: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:48 · NPR Tiny Desk · R&B · 25 Nov 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=rtXMRhAwWVQ" target="_blank">Madison McFerrin: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:35 · NPR Tiny Desk · Neo-Soul · 28 Apr 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=GjZ2XqYzPTI" target="_blank">Sheila E.: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:26 · NPR Tiny Desk · Funk · 11 Oct 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=L_BHC2l30pY" target="_blank">Sam Smith: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:47 · NPR Tiny Desk · Pop / Soul · 29 Sep 2023</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=-VwcJdXJoxs" target="_blank">Madi Diaz: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:11 · NPR Tiny Desk · Singer-Songwriter · 12 Mar 2026</p>
+      </div>
+  </div>
+
+  <div class="category cat-biblioteca">
+    <div class="category-header">
+      <h2>📚 Biblioteca</h2>
+      <span class="category-count">13 tracks</span>
+    </div>
+
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=WgqaxMOKfnI" target="_blank">Billy Strings: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:38 · NPR Tiny Desk · Bluegrass · 10 Dec 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=Br7beKBJFLE" target="_blank">Coco Jones: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:20 · NPR Tiny Desk · R&B · 9 Jan 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=AzUHNjKMeV4" target="_blank">Wet Leg: Tiny Desk Concert</a></p>
+        <p class="track-meta">17:00 · NPR Tiny Desk · Indie Rock · 9 Jul 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=DqgdNk9DCck" target="_blank">Alex Isley: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:01 · NPR Tiny Desk · R&B · 23 Jun 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=g3XYl7hdGPQ" target="_blank">Gloria Estefan: Tiny Desk Concert</a></p>
+        <p class="track-meta">30:14 · NPR Tiny Desk · Latin Pop · 13 Oct 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=1ul9aWg0AQo" target="_blank">Faye Webster: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:47 · NPR Tiny Desk · Indie Folk · 31 Jan 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=M5QOaaRJYFc" target="_blank">Jill Scott: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:18 · NPR Tiny Desk · Neo-Soul · 16 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=q-NDZ31pXmM" target="_blank">Sarah McLachlan: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:42 · NPR Tiny Desk · Singer-Songwriter · 12 Feb 2026</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=jrkOQuRYCIQ" target="_blank">The Doobie Brothers: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:19 · NPR Tiny Desk · Classic Rock · 5 Nov 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=BEoGvTlJMyY" target="_blank">Sabrina Carpenter: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:10 · NPR Tiny Desk · Pop · 20 Dec 2024</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=Sh4u8Da0F7A" target="_blank">Nubya Garcia: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:42 · NPR Tiny Desk · Jazz · 9 Apr 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=G_-DftINZKg" target="_blank">Beth Gibbons: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:46 · NPR Tiny Desk · Art Rock · 12 May 2025</p>
+      </div>
+      <div class="track-item">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=dWscjSp9B4w" target="_blank">Nduduzo Makhathini: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:25 · NPR Tiny Desk · Jazz · 18 Aug 2025</p>
+      </div>
+  </div>
+
+</main>
+
+<div class="hr"><hr></div>
+
+<footer>
+  <p class="stats-line">18 tracks · Nuevas 5 · Biblioteca 13</p>
+  <p class="footer-text">
+    Generated by <a href="https://betoneh.github.io/Music-monitor/">Music Monitor</a> ·
+    <a href="https://x.com/beto_neh">@beto_neh</a> · 2026-03-27T23:12
+  </p>
+</footer>
+
+<script>
+
+  // Reading time
+  const text = document.querySelector('main').innerText;
+  const words = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  document.getElementById('reading-time').textContent = minutes + ' min read';
+
+  // Progress bar
+  const bar = document.getElementById('progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    bar.style.width = progress + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  // Pull to refresh (PWA)
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+    let sy=0,p=false,d=document,b=d.body;
+    const el=d.createElement('div');
+    el.style.cssText='position:fixed;top:-50px;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:14px;z-index:9999;transition:top 0.2s;background:#212737;';
+    el.textContent='\u2193 Pull to refresh';
+    b.prepend(el);
+    d.addEventListener('touchstart',e=>{if(window.scrollY<1){sy=e.touches[0].clientY;p=true;}},{passive:true});
+    d.addEventListener('touchmove',e=>{
+      if(!p)return;
+      const dy=e.touches[0].clientY-sy;
+      if(dy<0||window.scrollY>0){p=false;el.style.top='-50px';return;}
+      if(dy>5)e.preventDefault();
+      const t=Math.min(dy*0.4,50);
+      el.style.top=(t-50)+'px';
+      el.textContent=dy>80?'\u2191 Release':'\u2193 Pull to refresh';
+    },{passive:false});
+    d.addEventListener('touchend',e=>{
+      if(!p){return;}p=false;
+      const dy=e.changedTouches[0].clientY-sy;
+      el.style.top='-50px';
+      if(dy>80){el.style.top='0';el.textContent='Refreshing...';setTimeout(()=>location.reload(),200);}
+    });
+  }
+
+</script>
+</body>
+</html>
