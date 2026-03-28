@@ -193,7 +193,7 @@
       <time>27 Mar, 2026 — 11:25pm</time>
     </span>
     <span class="sep">&bull;</span>
-    <span class="reading-time" id="reading-time"></span>
+    <span class="reading-time">5h 8m of music</span>
   </div>
 </header>
 
@@ -315,12 +315,6 @@
 </footer>
 
 <script>
-
-  // Reading time
-  const text = document.querySelector('main').innerText;
-  const words = text.trim().split(/\s+/).length;
-  const minutes = Math.max(1, Math.ceil(words / 200));
-  document.getElementById('reading-time').textContent = minutes + ' min read';
 
   // Progress bar
   const bar = document.getElementById('progress');
