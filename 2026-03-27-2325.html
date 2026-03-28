@@ -198,16 +198,17 @@
 </header>
 
 <div class="audio-row">
-  <div class="yt-player-wrap" id="yt-wrap">
-    <div class="yt-bar" id="yt-bar" onclick="document.getElementById('yt-frame').style.display=document.getElementById('yt-frame').style.display==='none'?'block':'none'; this.querySelector('.yt-label').textContent=document.getElementById('yt-frame').style.display==='none'?'Play all 18 tracks':'Hide player'">
-      <button class="audio-btn" aria-label="Play all">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
-      </button>
-      <span class="yt-label">Play all 18 tracks</span>
-    </div>
-    <iframe id="yt-frame" style="display:none; width:100%; height:60px; border:none; border-radius:0 0 4px 4px; background:#000;"
-      src="https://www.youtube.com/embed/lVFfXDSDM7w?playlist=lVFfXDSDM7w,rILO3jHMLv8,0E2RPWZT9J4,TDXsBlKq06Y,SP9Db7nKaxg,eUjQkMma-Is,WgqaxMOKfnI,AzUHNjKMeV4,Br7beKBJFLE,6jYtRQ2tHGg,o9PoZ0Vcb_s,q-NDZ31pXmM,Xcv0O44zfeU,g3XYl7hdGPQ,Sh4u8Da0F7A,DzS1ak7vQ-M,IRQR5foSUSI,bnpbKM6Gmvk&autoplay=0&rel=0&modestbranding=1&playsinline=1"
-      allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <div class="yt-player-wrap">
+    <iframe style="width:100%; height:180px; border:none; border-radius:4px;"
+      src="https://www.youtube.com/embed/videoseries?list=&autoplay=0&rel=0&modestbranding=1&playsinline=1"
+      id="yt-frame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <script>
+      (function(){
+        var ids = ["lVFfXDSDM7w", "rILO3jHMLv8", "0E2RPWZT9J4", "TDXsBlKq06Y", "SP9Db7nKaxg", "eUjQkMma-Is", "WgqaxMOKfnI", "AzUHNjKMeV4", "Br7beKBJFLE", "6jYtRQ2tHGg", "o9PoZ0Vcb_s", "q-NDZ31pXmM", "Xcv0O44zfeU", "g3XYl7hdGPQ", "Sh4u8Da0F7A", "DzS1ak7vQ-M", "IRQR5foSUSI", "bnpbKM6Gmvk"];
+        var f = document.getElementById('yt-frame');
+        f.src = 'https://www.youtube.com/embed/' + ids[0] + '?playlist=' + ids.slice(1).join(',') + '&autoplay=0&rel=0&modestbranding=1&playsinline=1';
+      })();
+    </script>
   </div>
 </div>
 
