@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#212737">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Music Monitor — 2026-03-31-0815</title>
+<style>
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0; width: 0%;
+    height: 4px; background: #0ec4a9; z-index: 100;
+    transition: width 50ms linear;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #212737; color: #eaedf3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                 "Liberation Mono", "Courier New", monospace;
+    min-height: 100svh; display: flex; flex-direction: column;
+    overflow-y: scroll; scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: rgba(14, 196, 169, 0.75); color: #212737; }
+  a { outline-offset: 1px; outline-color: rgba(14, 196, 169, 0.75); }
+  a:focus-visible { outline: 2px dashed rgba(14, 196, 169, 0.75); text-decoration: none; }
+
+  header, main, footer {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem;
+  }
+  header { padding: 2rem 1rem 1.5rem; }
+  .title-row {
+    display: flex; align-items: baseline; gap: 0.75rem;
+  }
+  .site-title {
+    display: inline-block;
+    font-size: 1.875rem; font-weight: 700; color: #0ec4a9; text-decoration: none;
+  }
+  @media (min-width: 640px) { .site-title { font-size: 2.25rem; } }
+  .site-title:hover { color: #0ec4a9; }
+  .feed-badge {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.4);
+    font-weight: 400;
+  }
+  .header-meta {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-top: 0.5rem; margin-bottom: 1.5rem;
+  }
+  .header-meta .date-wrap {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.875rem; color: #eaedf3; opacity: 0.8; font-style: italic;
+  }
+  @media (min-width: 640px) { .header-meta .date-wrap { font-size: 1rem; } }
+  .header-meta .date-wrap svg {
+    display: inline-block; width: 1.25rem; height: 1.25rem; min-width: 1.25rem; flex-shrink: 0;
+  }
+  .header-meta .sep { color: rgba(234, 237, 243, 0.3); }
+  .header-meta .reading-time {
+    font-size: 0.875rem; color: rgba(234, 237, 243, 0.6);
+  }
+
+  .hr { max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem; }
+  .hr hr { border: none; border-top: 1px solid #0a8f7b; }
+
+  main { flex: 1; }
+
+  .category { margin-bottom: 2rem; }
+  .category-header {
+    display: flex; align-items: baseline; gap: 0.75rem;
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #0a8f7b;
+  }
+  .category-header h2 { font-size: 1.25rem; font-weight: 600; color: #eaedf3; }
+  .category-count {
+    font-size: 0.75rem; color: #8b949e;
+    background: rgba(52, 63, 96, 0.75); padding: 1px 8px; border-radius: 3px;
+  }
+
+  /* Music Monitor category colors */
+  .cat-nuevas .category-header { border-color: #0ec4a9; }
+  .cat-nuevas .category-header h2 { color: #0ec4a9; }
+  .cat-biblioteca .category-header { border-color: #8b5cf6; }
+  .cat-biblioteca .category-header h2 { color: #8b5cf6; }
+
+  .editorial {
+    line-height: 1.75; font-size: 1rem; margin-bottom: 1rem;
+    overflow-wrap: break-word; word-break: break-word;
+    color: #eaedf3;
+  }
+
+  a { color: #0ec4a9; text-decoration: none; }
+  a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+  .editorial a { color: #0ec4a9; text-decoration: none; }
+  .editorial a:hover { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+
+  .track-item {
+    background: rgba(52, 63, 96, 0.35);
+    border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.5rem 0.75rem;
+    margin-bottom: 0.375rem;
+    overflow: hidden; max-width: 100%;
+  }
+  .track-item .editorial { font-size: 0.875rem; line-height: 1.4; margin-bottom: 0; }
+  .track-meta { margin-top: 0.125rem !important; }
+  @media (hover:hover) { .track-item:hover { border-color: #0ec4a9; } }
+  .cat-biblioteca .track-item:hover { border-color: #8b5cf6; }
+  .track-meta {
+    font-size: 0.75rem; color: #8b949e; margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  /* Rating slider */
+  .rating-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-top: 0.375rem;
+  }
+  .rating-slider {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 6px;
+    background: #3a4460; border-radius: 3px; outline: none;
+    cursor: pointer;
+  }
+  .rating-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #0ec4a9; border: 2px solid #212737;
+    cursor: pointer;
+  }
+  .rating-slider::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #0ec4a9; border: 2px solid #212737;
+    cursor: pointer;
+  }
+  .rating-label {
+    font-size: 0.75rem; color: #8b949e; min-width: 1.5rem;
+    text-align: center;
+  }
+  .rating-label.rated { color: #f5a623; font-weight: 600; }
+
+  /* Send buttons */
+  .fab-group {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    display: none; flex-direction: column; gap: 0.5rem;
+    z-index: 99;
+  }
+  .fab-group.visible { display: flex; }
+  .send-fab {
+    background: #0ec4a9; color: #212737; border: none;
+    border-radius: 2rem; padding: 0.75rem 1.25rem;
+    font-family: inherit; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: transform 0.2s, opacity 0.2s;
+    white-space: nowrap;
+  }
+  .send-fab:hover { transform: translateY(-2px); }
+  .copy-fab { background: rgba(52, 63, 96, 0.85); color: #eaedf3; }
+
+  .yt-player-wrap {
+    overflow: hidden; border-radius: 4px;
+  }
+  .yt-bar {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(52, 63, 96, 0.35); border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.625rem 1rem;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .yt-bar:hover { border-color: #0ec4a9; }
+  .yt-label { font-size: 0.875rem; color: #eaedf3; }
+
+  .audio-row {
+    max-width: 48rem; margin: 0 auto; width: 100%; padding: 0 1rem 1.5rem;
+  }
+  .audio-player {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(52, 63, 96, 0.35); border: 1px solid rgba(10, 143, 123, 0.3);
+    border-radius: 4px; padding: 0.625rem 1rem;
+  }
+  .audio-player:hover { border-color: #0ec4a9; }
+  .audio-btn {
+    background: none; border: none; cursor: pointer;
+    color: #0ec4a9; font-size: 1.25rem; padding: 0; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; flex-shrink: 0;
+  }
+  .audio-btn:hover { color: #eaedf3; }
+  .audio-progress {
+    flex: 1; height: 3px; background: rgba(52, 63, 96, 0.75);
+    border-radius: 2px; cursor: pointer; position: relative;
+  }
+  .audio-progress-fill {
+    height: 100%; background: #0ec4a9; border-radius: 2px;
+    width: 0%; transition: width 100ms linear;
+  }
+  .audio-time {
+    font-size: 0.75rem; color: #8b949e; min-width: 3.5rem; text-align: right;
+  }
+  .audio-note {
+    font-size: 0.75rem; color: #8b949e; flex: 1; font-style: italic;
+  }
+
+  footer { padding: 1.5rem 1rem; }
+  .footer-text {
+    text-align: center; font-size: 0.75rem; color: #8b949e; line-height: 1.6;
+  }
+  .footer-text a {
+    color: #eaedf3; text-decoration: underline;
+    text-decoration-style: dashed; text-underline-offset: 4px;
+  }
+  .footer-text a:hover { color: #0ec4a9; }
+  .stats-line {
+    text-align: center; font-size: 0.75rem; color: #8b949e;
+    margin-bottom: 0.5rem; line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 1.5rem 1rem 1rem; }
+    .site-title { font-size: 1.25rem; }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<header>
+  <div class="title-row">
+    <a href="index.html" class="site-title">Music Monitor</a>
+    <span class="feed-badge"></span>
+  </div>
+  <div class="header-meta">
+    <span class="date-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M7 14h.013"/><path d="M10.01 14h.005"/><path d="M13.01 14h.005"/><path d="M16.015 14h.005"/><path d="M13.015 17h.005"/><path d="M7.01 17h.005"/><path d="M10.01 17h.005"/></svg>
+      <time>31 Mar, 2026</time>
+    </span>
+    <span class="sep">&bull;</span>
+    <span class="reading-time">4h 31m of music</span>
+  </div>
+</header>
+
+<div class="audio-row">
+  <div class="yt-player-wrap">
+    <iframe style="width:100%; height:180px; border:none; border-radius:4px;"
+      src="https://www.youtube.com/embed/videoseries?list=&autoplay=0&rel=0&modestbranding=1&playsinline=1"
+      id="yt-frame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <script>
+      (function(){
+        var ids = ["s8fAU3O4S3I", "O7urZqo-WU4", "dkp9PUQ5ZlQ", "ApcengSU8A0", "qIf0n3JqgLI", "45GOWLEvmv4", "q-NDZ31pXmM", "QeT_xGZUiOo", "GhY31ngpnWg", "jNnsTNZR2bU", "X0X12AD7nK4", "fOAIrUZbOwo", "BEoGvTlJMyY", "X1bx9_TL20A", "mV5U5gWJSU4", "x8WTPgeVPjg", "gHL5ApOqMQc", "nkgBWlsQdgQ"];
+        var f = document.getElementById('yt-frame');
+        f.src = 'https://www.youtube.com/embed/' + ids[0] + '?playlist=' + ids.slice(1).join(',') + '&autoplay=0&rel=0&modestbranding=1&playsinline=1';
+      })();
+    </script>
+  </div>
+</div>
+
+<main>
+
+  <div class="category cat-nuevas">
+    <div class="category-header">
+      <h2>Nuevas</h2>
+      <span class="category-count">6 tracks</span>
+    </div>
+
+      <div class="track-item" data-id="s8fAU3O4S3I" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=s8fAU3O4S3I" target="_blank">Harry Styles - Dance No More in the Live Lounge</a></p>
+        <p class="track-meta">3:22 · YouTube · 12 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="s8fAU3O4S3I">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="O7urZqo-WU4" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=O7urZqo-WU4" target="_blank">Lekan - Always | A COLORS SHOW</a></p>
+        <p class="track-meta">4:14 · COLORS · 30 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="O7urZqo-WU4">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="dkp9PUQ5ZlQ" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=dkp9PUQ5ZlQ" target="_blank">April + VISTA - Love Unspent | Audiotree Live</a></p>
+        <p class="track-meta">2:58 · Audiotree · 30 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="dkp9PUQ5ZlQ">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="ApcengSU8A0" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=ApcengSU8A0" target="_blank">Moby live at Cercle Odyssey, Los Angeles, USA</a></p>
+        <p class="track-meta">13:17 · YouTube · 10 Dec 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="ApcengSU8A0">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="qIf0n3JqgLI" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=qIf0n3JqgLI" target="_blank">Sekou - Never Gunna Give You Up in the Live Lounge</a></p>
+        <p class="track-meta">3:13 · YouTube · 3 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="qIf0n3JqgLI">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="45GOWLEvmv4" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=45GOWLEvmv4" target="_blank">Olivia Wald - Introducing Olivia Wald | Vevo DSCVR</a></p>
+        <p class="track-meta">2:50 · YouTube · 26 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="45GOWLEvmv4">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+  </div>
+
+  <div class="category cat-biblioteca">
+    <div class="category-header">
+      <h2>Biblioteca</h2>
+      <span class="category-count">12 tracks</span>
+    </div>
+
+      <div class="track-item" data-id="q-NDZ31pXmM" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=q-NDZ31pXmM" target="_blank">Sarah McLachlan: Tiny Desk Concert</a></p>
+        <p class="track-meta">24:42 · NPR Tiny Desk · Singer-Songwriter · 12 Feb 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="q-NDZ31pXmM">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="QeT_xGZUiOo" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=QeT_xGZUiOo" target="_blank">Michael Mayo: Tiny Desk Concert</a></p>
+        <p class="track-meta">21:17 · NPR Tiny Desk · Jazz Vocal · 8 Sep 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="QeT_xGZUiOo">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="GhY31ngpnWg" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=GhY31ngpnWg" target="_blank">Abel Selaocoe: Tiny Desk Concert</a></p>
+        <p class="track-meta">16:57 · NPR Tiny Desk · World / Cello · 3 Mar 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="GhY31ngpnWg">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="jNnsTNZR2bU" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=jNnsTNZR2bU" target="_blank">Leon Thomas: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:44 · NPR Tiny Desk · R&B · 20 Feb 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="jNnsTNZR2bU">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="X0X12AD7nK4" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=X0X12AD7nK4" target="_blank">Goo Goo Dolls: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:10 · NPR Tiny Desk · Alt Rock · 19 Nov 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="X0X12AD7nK4">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="fOAIrUZbOwo" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=fOAIrUZbOwo" target="_blank">Billie Eilish: Tiny Desk Concert</a></p>
+        <p class="track-meta">22:18 · NPR Tiny Desk · Pop · 12 Dec 2024</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="fOAIrUZbOwo">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="BEoGvTlJMyY" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=BEoGvTlJMyY" target="_blank">Sabrina Carpenter: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:10 · NPR Tiny Desk · Pop · 20 Dec 2024</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="BEoGvTlJMyY">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="X1bx9_TL20A" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=X1bx9_TL20A" target="_blank">Buena Vista Social Club: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:18 · NPR Tiny Desk · Son Cubano · 27 May 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="X1bx9_TL20A">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="mV5U5gWJSU4" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=mV5U5gWJSU4" target="_blank">Elmiene: Tiny Desk Concert</a></p>
+        <p class="track-meta">20:26 · NPR Tiny Desk · Soul · 11 Nov 2024</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="mV5U5gWJSU4">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="x8WTPgeVPjg" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=x8WTPgeVPjg" target="_blank">Kamasi Washington: Tiny Desk Concert</a></p>
+        <p class="track-meta">19:07 · NPR Tiny Desk · Jazz · 21 Oct 2024</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="x8WTPgeVPjg">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="gHL5ApOqMQc" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=gHL5ApOqMQc" target="_blank">Robert Plant: Tiny Desk Concert</a></p>
+        <p class="track-meta">26:52 · NPR Tiny Desk · Classic Rock · 21 Nov 2025</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="gHL5ApOqMQc">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+      <div class="track-item" data-id="nkgBWlsQdgQ" data-default="5">
+        <p class="editorial"><a href="https://www.youtube.com/watch?v=nkgBWlsQdgQ" target="_blank">aja monet - for the Congo (Live on KEXP)</a></p>
+        <p class="track-meta">4:32 · KEXP · 26 Mar 2026</p>
+        <div class="rating-row">
+          <input type="range" min="0" max="10" value="5" step="1" class="rating-slider" data-id="nkgBWlsQdgQ">
+          <span class="rating-label">5</span>
+        </div>
+      </div>
+  </div>
+
+</main>
+
+<div class="hr"><hr></div>
+
+<footer>
+  <p class="stats-line">18 tracks · Nuevas 6 · Biblioteca 12</p>
+  <p class="footer-text">
+    Generated by <a href="https://betoneh.github.io/Music-monitor/">Music Monitor</a> ·
+    <a href="https://x.com/beto_neh">@beto_neh</a> · 2026-03-31T08:15
+  </p>
+</footer>
+
+<div class="fab-group" id="fab-group">
+  <button class="send-fab" id="send-tg" onclick="sendTelegram()">📨 Enviar a Telegram</button>
+  <button class="send-fab copy-fab" id="copy-btn" onclick="copyRatings()">📋 Copiar</button>
+</div>
+
+<script>
+
+  // Progress bar
+  const bar = document.getElementById('progress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    bar.style.width = progress + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  // Rating system
+  const STORAGE_KEY = 'mm_ratings_' + location.pathname;
+  let ratings = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  // Build defaults map from data-default attributes
+  const defaults = {};
+  document.querySelectorAll('.track-item').forEach(item => {
+    defaults[item.dataset.id] = parseInt(item.dataset.default) || 5;
+  });
+
+  function syncSliders() {
+    document.querySelectorAll('.rating-slider').forEach(sl => {
+      const id = sl.dataset.id;
+      const def = defaults[id] || 5;
+      const val = (id in ratings) ? ratings[id] : def;
+      sl.value = val;
+      const lbl = sl.parentElement.querySelector('.rating-label');
+      lbl.textContent = val;
+      lbl.classList.toggle('rated', val !== def);
+    });
+    const fg = document.getElementById('fab-group');
+    // Show buttons only if at least one track differs from its default
+    let anyChanged = false;
+    for (const [id, val] of Object.entries(ratings)) {
+      if (val !== (defaults[id] || 5)) { anyChanged = true; break; }
+    }
+    if (fg) fg.classList.toggle('visible', anyChanged);
+  }
+
+  document.addEventListener('input', e => {
+    if (!e.target.classList.contains('rating-slider')) return;
+    const id = e.target.dataset.id;
+    const val = parseInt(e.target.value);
+    ratings[id] = val;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings));
+    syncSliders();
+  });
+
+  syncSliders();
+
+  function buildRatingsText() {
+    const items = document.querySelectorAll('.track-item');
+    const lines = ['ratings'];
+    items.forEach(item => {
+      const id = item.dataset.id;
+      if (!(id in ratings)) return;
+      const def = defaults[id] || 5;
+      if (ratings[id] === def) return;
+      const title = item.querySelector('.editorial a').textContent.trim();
+      lines.push(ratings[id] + ' ' + id + ' ' + title);
+    });
+    lines.push('');
+    lines.push('Procesa estos ratings con taste_engine.py ingest y corre profile_enricher.py enrich');
+    return lines.join('\n');
+  }
+
+  function sendTelegram() {
+    const text = buildRatingsText();
+    const encoded = encodeURIComponent(text);
+    window.open('https://t.me/Max1616_bot?text=' + encoded, '_blank');
+  }
+
+  function copyRatings() {
+    const text = buildRatingsText();
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '\u2705 Copiado';
+      setTimeout(() => { btn.textContent = '\ud83d\udccb Copiar'; }, 1500);
+    }).catch(() => {
+      prompt('Copia manualmente:', text);
+    });
+  }
+
+  // Pull to refresh (PWA)
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+    let sy=0,p=false,d=document,b=d.body;
+    const el=d.createElement('div');
+    el.style.cssText='position:fixed;top:-50px;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:14px;z-index:9999;transition:top 0.2s;background:#212737;';
+    el.textContent='\u2193 Pull to refresh';
+    b.prepend(el);
+    d.addEventListener('touchstart',e=>{if(window.scrollY<1){sy=e.touches[0].clientY;p=true;}},{passive:true});
+    d.addEventListener('touchmove',e=>{
+      if(!p)return;
+      const dy=e.touches[0].clientY-sy;
+      if(dy<0||window.scrollY>0){p=false;el.style.top='-50px';return;}
+      if(dy>5)e.preventDefault();
+      const t=Math.min(dy*0.4,50);
+      el.style.top=(t-50)+'px';
+      el.textContent=dy>80?'\u2191 Release':'\u2193 Pull to refresh';
+    },{passive:false});
+    d.addEventListener('touchend',e=>{
+      if(!p){return;}p=false;
+      const dy=e.changedTouches[0].clientY-sy;
+      el.style.top='-50px';
+      if(dy>80){el.style.top='0';el.textContent='Refreshing...';setTimeout(()=>location.reload(),200);}
+    });
+  }
+
+</script>
+</body>
+</html>
